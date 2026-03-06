@@ -1,0 +1,14 @@
+#ignore build directory
+\build
+
+#ignore object files
+\*.o
+
+#ignore executable files
+\*.exe
+
+#ignore temporary files
+\*.tmp
+
+#ignore log files
+\*.log
