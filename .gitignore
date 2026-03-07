@@ -1,5 +1,7 @@
 #ignore build directory
 \build
+\march_6\build
+\march_6\checksum\build
 
 #ignore object files
 \*.o
