@@ -5,6 +5,7 @@
 
 #ignore object files
 \*.o
+\march_10\*.o
 
 #ignore executable files
 \*.exe
