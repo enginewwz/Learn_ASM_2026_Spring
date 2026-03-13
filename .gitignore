@@ -3,3 +3,6 @@
 
 #ignore object files
 *.o
+
+#ignore executable files
+*.exe
