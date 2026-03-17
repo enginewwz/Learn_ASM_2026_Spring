@@ -10,8 +10,12 @@
 _start:
         # initial primechecker
         movl $2, %eax
+        #initial primechecher end address
+        mov $primechecker, %edi
+        add $1000, %edi
+
         # initial loop counter
-        movl $998, %ecx
+        movl $999, %ecx
         # initial sum
         movl $0, %edx
 1:
@@ -19,13 +23,13 @@ _start:
         mov $primechecker, %ebx
         sub $1, %ebx
         add %eax, %ebx
-        cmp $0, (%ebx)
+        cmpb $0, (%ebx)
         jne 3f
         # do not jump if is prime then add it to sum
         add %eax, %edx
 2:
         add %eax, %ebx
-        cmp $1000, %ebx
+        cmp %edi, %ebx
         jge 3f
         # mark as not prime
         movb $1, (%ebx)
@@ -36,14 +40,14 @@ _start:
         loop 1b
 
         # syscall: write(1, %edx, 4)
-        mov $1, %eax
-        mov $1, %ebx
-        mov %edx, %ecx
-        mov $4, %edx
+        mov $1, %rax
+        mov $1, %rdi
+        mov %edx, %rcx
+        mov $4, %rdx
         syscall
 
         # syscall: exit(0)
-        mov $60, %eax
-        mov $0, %ebx
+        mov $60, %rax
+        mov $0, %rbx
         syscall
 
