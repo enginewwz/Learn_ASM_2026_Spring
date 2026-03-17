@@ -9,40 +9,40 @@
 .global _start
 _start:
         # initial primechecker
-        movl $2, %eax
-        #initial primechecher end address
-        mov $primechecker, %edi
-        add $1000, %edi
+        mov $2, %rax
+        # initial primechecher end address
+        mov $primechecker, %rdi
+        add $1000, %rdi
 
         # initial loop counter
-        movl $999, %ecx
+        mov $999, %rcx
         # initial sum
-        movl $0, %edx
+        mov $0, %rdx
 1:
         # mark all multiples as not prime
-        mov $primechecker, %ebx
-        sub $1, %ebx
-        add %eax, %ebx
-        cmpb $0, (%ebx)
+        mov $primechecker, %rbx
+        sub $1, %rbx
+        add %rax, %rbx
+        cmpb $0, (%rbx)
         jne 3f
         # do not jump if is prime then add it to sum
-        add %eax, %edx
+        add %rax, %rdx
 2:
-        add %eax, %ebx
-        cmp %edi, %ebx
+        add %rax, %rbx
+        cmp %rdi, %rbx
         jge 3f
         # mark as not prime
-        movb $1, (%ebx)
+        movb $1, (%rbx)
         jmp 2b
 3:
         # loop counter - 1
-        add $1, %eax
+        add $1, %rax
         loop 1b
 
-        # syscall: write(1, %edx, 4)
+        # syscall: write(1, %rdx, 4)
         mov $1, %rax
         mov $1, %rdi
-        mov %edx, %rcx
+        mov %rdx, %rcx
         mov $4, %rdx
         syscall
 
