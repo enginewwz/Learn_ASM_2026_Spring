@@ -5,6 +5,8 @@
                 .rept 1000
                 .byte 0 # 0 means prime, 1 means not prime
                 .endr
+        result:
+                .long 0
 .section .text
 .global _start
 _start:
@@ -39,15 +41,19 @@ _start:
         add $1, %rax
         loop 1b
 
-        # syscall: write(1, %rdx, 4)
+        # store result to memory
+        mov $result, %rbx
+        movl %edx, (%rbx)
+
+        # syscall: write(1, result, 4)
         mov $1, %rax
         mov $1, %rdi
-        mov %rdx, %rcx
+        lea result(%rip), %rsi
         mov $4, %rdx
         syscall
 
         # syscall: exit(0)
         mov $60, %rax
-        mov $0, %rbx
+        mov $0, %rdi
         syscall
 
