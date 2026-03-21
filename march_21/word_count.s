@@ -13,12 +13,16 @@
         .skip 1000
     # 100 words * 10 alphabet per word buffer
 
-.section .data
     wordcount:
-        .rept 100
-        .int 0
+        .skip 100
+    # 1 byte for each word count
+
+.section .data
+    cmpbuf:
+        .rept 10
+        .ascii " "
         .endr
-    # int is 4 bytes
+    # one word buffer for comparison, initialized with space 
 
 .section .text global _start
 _start:
@@ -29,18 +33,98 @@ _start:
     mov $1000, %rdx
     syscall
 
-    cmp $0, %rax
+    cmpq $0, %rax
     jle exit
 
     # null terminate the string
     movb $0, (%rsi, %rax)
-    
-    # initial read cursor, word buffer cursor, and word count cursor
+
+    # initial read cursor, word buffer cursor, word count cursor, comparison buffer cursor
     mov $buffer, %r8
     mov $wordbuf, %r9
     mov $wordcount, %r10
+    mov $cmpbuf, %r13
 
-    # initial word index
-    mov $0, %r11
+    # initial current top of word buffer
+    mov $wordbuf, %r11
+
+    # initial inword alphabet counter
+    mov $0, %r12
 
     # loop 1: while not end of string, extract words and count
+buffer_loop:
+    movb (%r8), %al
+    # jump out when spotting /0
+    cmpb $0, %al
+    je print_result
+    
+    # check if alphabet or not
+    cmpb $'A', %al
+    jl word_end
+    cmpb $'z', %al
+    jg word_end
+    cmpb $'Z', %al
+    jle accept_char
+    cmpb $'a', %al
+    jge accept_char
+    jmp word_end
+
+accept_char:
+    # more than 10 alphabet in a word, spot it as error
+    cmp $10, %r12
+    je exit
+    # read the character into word buffer
+    movb %al, (%r13)
+    inc %r13
+    inc %r12
+    jmp buffer_loop
+
+word_end:
+    # ifno word read, just skip
+    cmp $0, %r12
+    je buffer_loop
+
+    # compare every alphabet in word buffer with comparison buffer, if same, add 1 to same word count
+compare_find_word_loop:
+    cmp %r9, %r11
+    je new_word
+
+    # new word found, add it to the wordbuf and set count to 1
+new_word:
+    mov $cmpbuf, %r13
+    mov $0, %r12
+
+    # copy the word to wordbuf
+1:
+    cmp $10, %r12
+    je 2f
+    movb (%r13), %al
+    movb %al, (%r9)
+    inc %r13
+    inc %r9
+    inc %r12
+    jmp 1b
+
+2:    
+    # new word found and copied, set count to 1 and reset word count cursor
+    movb $1, (%r10)
+    mov $wordcount, %r10
+
+    # clear the cmpbuf
+    mov $cmpbuf, %r13
+    mov $0, %r12
+3:
+    cmp $10, %r12
+    je 4f
+    movb $' ', (%r13)
+    inc %r13
+    inc %r12
+    jmp 3b
+
+4:
+    # increase the top of word buffer cursor, reset inword alphabet counter, reset comparison buffer cursor, and jump back to read next word
+    add $10, %r11
+    mov $0, %r12
+    mov $cmpbuf, %r13
+    mov $wordbuf, %r9
+    jmp buffer_loop
