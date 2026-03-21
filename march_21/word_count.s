@@ -1,7 +1,7 @@
 # word_count.s
 # divide the string into words and count the number of each word
 # input: a string of words separated by spaces and symbols
-# warning: need to be no more than 1000 bytes totally, no more than 10 alphabets per word, and no more than 100 different words
+# warning: need to be no more than 999 bytes totally, no more than 10 alphabets per word, and no more than 100 different words
 # output: the most common word
 # at&t, x86-64 assembly
 
