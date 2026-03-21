@@ -22,7 +22,7 @@
         .rept 10
         .ascii " "
         .endr
-    # one word buffer for comparison, initialized with space 
+    # one buffer for comparison, initialized with space 
 
 .section .text global _start
 _start:
@@ -154,6 +154,7 @@ compare_word:
     # reset word buffer cursor, comparison buffer cursor, and inword alphabet counter
     mov $wordbuf, %r9
     mov $cmpbuf, %r13
+    mov $wordcount, %r10
     mov $0, %r12
 
     # jump back to read next word
@@ -165,4 +166,45 @@ compare_word:
     jmp compare_find_word_loop
 
 print_result:
-    # loop 8: find the most common word
+    # loop: find the most common word
+    # initial the most frequency: r8
+    mov $0, %r8
+
+    # the word cursor is the wordbuf cursor: r9, which is pre-initialized
+    # the top of wordbuf cursor is the wordcount cursor: r11, which is pre-initialized
+    # the word count cursor is the r10, which is pre-initialized
+
+    # r13 is used to load the current top word address
+    mov $wordbuf, %r13
+
+    # r12 is used to print every word in the current top frequence word, that is needed and pre-initialized
+
+find_most_common_word_loop:
+    cmp %r9, %r11
+    je print_most_common_word
+
+    cmpb (%r10), %r8
+    jle cur_update
+
+    # update the most common word and the most common count
+    movb (%r10), %r8
+    mov %r9, %r13
+
+cur_update:
+    # move to the next word and next word count
+    add $10, %r9
+    add $1, %r10
+    jmp find_most_common_word_loop
+
+print_most_common_word:
+    # print the most common word, which is at r13 and has length of 10
+    mov $1, %rax
+    mov $1, %rdi
+    mov %r13, %rsi
+    mov $10, %rdx
+    syscall
+
+exit:
+    mov $60, %rax
+    xor %rdi, %rdi
+    syscall
