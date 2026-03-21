@@ -24,13 +24,14 @@
         .endr
     # one buffer for comparison, initialized with space 
 
-.section .text global _start
+.section .text
+.global _start
 _start:
     # read input string
     mov $0, %rax
     mov $0, %rdi
     mov $buffer, %rsi
-    mov $1000, %rdx
+    mov $999, %rdx
     syscall
 
     cmpq $0, %rax
@@ -51,12 +52,20 @@ _start:
     # initial inword alphabet counter
     mov $0, %r12
 
+    # end-of-input flag for word_end_common: 0=normal delimiter, 1=EOF
+    mov $0, %r15
+
     # loop 1: while not end of string, extract words and count
 buffer_loop:
     movb (%r8), %al
     # jump out when spotting \0
     cmpb $0, %al
-    je print_result
+    jne check_char
+    cmp $0, %r12
+    jne word_end_eof
+    jmp print_result
+
+check_char:
     
     # check if alphabet or not
     cmpb $'A', %al
@@ -77,12 +86,25 @@ accept_char:
     movb %al, (%r13)
     inc %r13
     inc %r12
+    inc %r8
     jmp buffer_loop
 
 word_end:
+    # delimiter consumed, move to next input char
+    inc %r8
+    jmp word_end_common
+
+word_end_eof:
+    mov $1, %r15
+
+word_end_common:
     # ifno word read, just skip
     cmp $0, %r12
     je buffer_loop
+
+    # reset dictionary scan cursors for this word lookup
+    mov $wordbuf, %r9
+    mov $wordcount, %r10
 
     # compare every alphabet in word buffer with comparison buffer, if same, add 1 to same word count
 compare_find_word_loop:
@@ -92,6 +114,10 @@ compare_find_word_loop:
 
     # new word found, add it to the wordbuf and set count to 1
 new_word:
+    # guard dictionary capacity: at most 100 words * 10 bytes
+    cmp $wordbuf+1000, %r11
+    jae exit
+
     mov $cmpbuf, %r13
     mov $0, %r12
 
@@ -128,6 +154,8 @@ new_word:
     mov $0, %r12
     mov $cmpbuf, %r13
     mov $wordbuf, %r9
+    cmp $0, %r15
+    jne print_result
     jmp buffer_loop
 
 compare_word:
@@ -151,6 +179,19 @@ compare_word:
     movb (%r10), %al
     inc %al
     movb %al, (%r10)
+
+    # clear the cmpbuf
+    mov $cmpbuf, %r13
+    mov $0, %r12
+8:
+    cmp $10, %r12
+    je 9f
+    movb $' ', (%r13)
+    inc %r13
+    inc %r12
+    jmp 8b
+
+9:
     # reset word buffer cursor, comparison buffer cursor, and inword alphabet counter
     mov $wordbuf, %r9
     mov $cmpbuf, %r13
@@ -158,14 +199,22 @@ compare_word:
     mov $0, %r12
 
     # jump back to read next word
+    cmp $0, %r15
+    jne print_result
     jmp buffer_loop
 
 7:
     # same word not found, jump back to compare next word
+    sub %r12, %r9
+    add $10, %r9
     add $1, %r10
     jmp compare_find_word_loop
 
 print_result:
+    # no word collected, just exit
+    cmp $wordbuf, %r11
+    je exit
+
     # loop: find the most common word
     # initial the most frequency: r8
     mov $0, %r8
@@ -183,11 +232,12 @@ find_most_common_word_loop:
     cmp %r9, %r11
     je print_most_common_word
 
-    cmpb (%r10), %r8
-    jle cur_update
+    movb (%r10), %al
+    cmpb %al, %r8b
+    jae cur_update
 
     # update the most common word and the most common count
-    movb (%r10), %r8
+    movb %al, %r8b
     mov %r9, %r13
 
 cur_update:
@@ -197,11 +247,22 @@ cur_update:
     jmp find_most_common_word_loop
 
 print_most_common_word:
-    # print the most common word, which is at r13 and has length of 10
+    # print the most common word without trailing spaces
+    mov %r13, %rsi
+    mov $0, %rdx
+
+print_len_loop:
+    cmp $10, %rdx
+    je do_print
+    movb (%rsi, %rdx), %al
+    cmpb $' ', %al
+    je do_print
+    inc %rdx
+    jmp print_len_loop
+
+do_print:
     mov $1, %rax
     mov $1, %rdi
-    mov %r13, %rsi
-    mov $10, %rdx
     syscall
 
 exit:
