@@ -54,7 +54,7 @@ _start:
     # loop 1: while not end of string, extract words and count
 buffer_loop:
     movb (%r8), %al
-    # jump out when spotting /0
+    # jump out when spotting \0
     cmpb $0, %al
     je print_result
     
@@ -88,6 +88,7 @@ word_end:
 compare_find_word_loop:
     cmp %r9, %r11
     je new_word
+    jmp compare_word
 
     # new word found, add it to the wordbuf and set count to 1
 new_word:
@@ -128,3 +129,40 @@ new_word:
     mov $cmpbuf, %r13
     mov $wordbuf, %r9
     jmp buffer_loop
+
+compare_word:
+    # compare the word in wordbuf with the word in cmpbuf
+    mov $0, %r12
+    mov $cmpbuf, %r13
+
+5:
+    cmp $10, %r12
+    je 6f
+    movb (%r13), %al
+    cmpb %al, (%r9)
+    jne 7f
+    inc %r13
+    inc %r9
+    inc %r12
+    jmp 5b
+
+6:
+    # same word found, add 1 to the same word count
+    movb (%r10), %al
+    inc %al
+    movb %al, (%r10)
+    # reset word buffer cursor, comparison buffer cursor, and inword alphabet counter
+    mov $wordbuf, %r9
+    mov $cmpbuf, %r13
+    mov $0, %r12
+
+    # jump back to read next word
+    jmp buffer_loop
+
+7:
+    # same word not found, jump back to compare next word
+    add $1, %r10
+    jmp compare_find_word_loop
+
+print_result:
+    # loop 8: find the most common word
