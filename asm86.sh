@@ -26,9 +26,9 @@ for src in "$@"; do
   exe="$out_dir/$src_base"
 
   # Assemble
-  as -g -o "$obj" "$src"
+  as --32 -g -o "$obj" "$src"
   # Link
-  ld -g -o "$exe" "$obj"
+  ld -m elf_i386 -g -o "$exe" "$obj"
 
   echo "Built: $exe"
 done
