@@ -14,3 +14,6 @@
 # & ignore asm86.sh, other than in the root directory
 **/asm86.sh
 !/asm86.sh
+
+# ignore zip
+*.zip
