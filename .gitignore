@@ -6,3 +6,7 @@
 
 #ignore executable files
 *.exe
+
+#ignore asm.sh, other than in the root directory
+**/asm.sh
+!/asm.sh
