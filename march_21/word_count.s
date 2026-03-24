@@ -35,8 +35,8 @@ _start:
     mov $999, %rdx
     syscall
 
-    cmpq $0, %rax
-    jle exit
+    test %rax, %rax
+    jz exit
 
     # null terminate the string
     movb $0, (%rsi, %rax)
@@ -51,34 +51,39 @@ _start:
     mov $wordbuf, %r11
 
     # initial inword alphabet counter
-    mov $0, %r12
+    xor %r12, %r12
 
     # end-of-input flag for word_end_common: 0=normal delimiter, 1=EOF
-    mov $0, %r15
+    xor %r15, %r15
+
+    # initial rax and rcx for following test & cmp
+    xor %rax, %rax
+    xor %rcx, %rcx
 
     # loop 1: while not end of string, extract words and count
 buffer_loop:
     movb (%r8), %al
     # jump out when spotting \0
-    cmpb $0, %al
-    jne check_char
-    cmp $0, %r12
-    jne word_end_eof
+    test %al, %al
+    jnz check_char
+    test %r12, %r12
+    jnz word_end_eof
     jmp print_result
 
 check_char:
-    
+    movb %al, %cl
     # check if alphabet or not
-    cmpb $'A', %al
-    jl word_end
-    cmpb $'z', %al
-    jg word_end
-    cmpb $'Z', %al
-    jle accept_char
-    cmpb $'a', %al
-    jge accept_char
+    lea -65(%rcx), %rcx
+    cmpb $26, %cl
+    jb accept_char_upper
+    lea -32(%rcx), %rcx
+    cmpb $26, %cl
+    jb accept_char
     jmp word_end
 
+accept_char_upper:
+    # this line is for non-case-insensitive word count, convert uppercase to lowercase by adding 32
+    lea 32(%rax), %rax
 accept_char:
     # more than 10 alphabet in a word, spot it as error
     cmp $10, %r12
@@ -227,8 +232,6 @@ print_result:
     # r13 is used to load the current top word address
     mov $wordbuf, %r13
 
-    # r12 is used to print every word in the current top frequence word, that is needed and pre-initialized
-
 find_most_common_word_loop:
     cmp %r9, %r11
     je print_most_common_word
@@ -262,6 +265,10 @@ print_len_loop:
     jmp print_len_loop
 
 do_print:
+    # add \n after the word
+    movb $'\n', (%rsi, %rdx)
+    add $1, %rdx
+
     mov $1, %rax
     mov $1, %rdi
     syscall
