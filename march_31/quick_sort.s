@@ -1,7 +1,7 @@
 # quicksort with int array
 .section .data
     testdata:
-        .int 5, 2, 9, 1, 5, 6, 3, 4, 8, 7, 0
+        .int 52, 12, 19, 61, 15, 6, 35, 4, 854, 75, 0
 .section .bss
     rightarray:
         .skip 64 # maxline 16
