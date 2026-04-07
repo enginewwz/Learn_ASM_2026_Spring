@@ -10,9 +10,8 @@
 .section .text
 .global _start
 _start:
-    push %rbp
-    mov %rsp, %rbp
     and $-16, %rsp
+    mov %rsp, %rbp
     # 16bits aligen rsp
 
     sub $32, %rsp
