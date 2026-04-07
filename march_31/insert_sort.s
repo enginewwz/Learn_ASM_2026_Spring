@@ -31,6 +31,8 @@ _start:
 
 
 # func 1
+.global insert_sort
+.type insert_sort, @function
 insert_sort:
 
     # string start pos at %rdi
@@ -72,12 +74,17 @@ insert_sort:
 sort_exit:
     ret
 
+
 # func 2
+.global as_puts
+.type as_puts, @function
 as_puts:
     mov $1, %rax
     syscall
     ret
 
+.global as_exit
+.type as_exit, @function
 as_exit:
     mov $60, %rax
     syscall

@@ -37,7 +37,8 @@ _start:
     syscall
 
 
-
+.global quicksort
+.type quicksort, @function
 quicksort:
 
     # rdi: string start pos
@@ -133,7 +134,10 @@ end:
 
     leave
     ret
-    
+
+
+.global get_random_mod
+.type get_random_mod, @function
 get_random_mod:
 retry:
     rdrand %rax
@@ -145,6 +149,8 @@ retry:
 
     ret
 
+.global print_array
+.type print_array, @function
 print_array:
 
     # rdi: array start pos
