@@ -1,34 +1,40 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Check arguments
-if [ "$#" -lt 1 ]; then
-  echo "Usage: $0 file1.s [file2.s ...]"
+# Usage:
+#   ./asm86.sh file1.s|file1.c [file2.s|file2.c ...]
+#
+# Rules:
+# - Output dir: <dir-of-first-file>/build/
+# - ELF name: basename of first file (no extension)
+# - If only one .s file -> use as/ld
+# - Otherwise -> use gcc -m32
+
+if [[ $# -lt 1 ]]; then
+  echo "Usage: $0 file1.s|file1.c [file2.s|file2.c ...]" >&2
   exit 1
 fi
 
-for src in "$@"; do
-  # Ensure the source file exists
-  if [ ! -f "$src" ]; then
-    echo "Skip: file not found -> $src" >&2
-    continue
-  fi
+FIRST="$1"
+FIRST_DIR="$(dirname -- "$FIRST")"
+BUILD_DIR="${FIRST_DIR}/build"
+mkdir -p "$BUILD_DIR"
 
-  # Derive paths
-  src_dir=$(dirname "$src")
-  src_base=$(basename "$src" .s)
-  out_dir="$src_dir/build"
+first_base="$(basename -- "$FIRST")"
+base_name="${first_base%.*}"
+[[ -z "$base_name" ]] && base_name="$first_base"
 
-  # Ensure output directory exists
-  mkdir -p "$out_dir"
+OBJ="${BUILD_DIR}/${base_name}.o"
+ELF="${BUILD_DIR}/${base_name}"
 
-  obj="$out_dir/$src_base.o"
-  exe="$out_dir/$src_base"
+# If only one argument and it's .s -> use as/ld
+if [[ $# -eq 1 && "$FIRST" == *.s ]]; then
+  as --32 -g -o "$OBJ" "$FIRST"
+  ld -m elf_i386 -g -o "$ELF" "$OBJ"
+  echo "Built: $ELF"
+  exit 0
+fi
 
-  # Assemble
-  as --32 -g -o "$obj" "$src"
-  # Link
-  ld -m elf_i386 -g -o "$exe" "$obj"
-
-  echo "Built: $exe"
-done
+# Otherwise use gcc -m32 with -g
+gcc -m32 -g -o "$ELF" "$@"
+echo "Built: $ELF"

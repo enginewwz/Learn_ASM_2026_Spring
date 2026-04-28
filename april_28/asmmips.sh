@@ -4,12 +4,16 @@ set -euo pipefail
 # Usage:
 #   ./mips_build.sh <file1.c|file1.s> [file2.c|file2.s ...] [-- <extra_flags...>]
 #
-# Rules:
-# - Compile each source file into a .o first
-# - Then link all .o into a final ELF
-# - All outputs go to: <dir-of-first-file>/build/
-# - .o name: source basename + .o
-# - ELF name: basename of the first file (no extension)
+# Flow:
+# 1) Directly compile+relocatable-link all sources into one combined .o (with -g)
+# 2) Link the combined .o into the final ELF (with -g)
+#
+# Output dir:
+#   <dir-of-first-file>/build/
+#
+# Names:
+# - Combined .o -> build/<first_basename>.o
+# - ELF         -> build/<first_basename> (no extension)
 
 if [[ $# -lt 1 ]]; then
   echo "Usage: $0 <file1.c|file1.s> [file2.c|file2.s ...] [-- <extra_flags...>]" >&2
@@ -37,13 +41,15 @@ FIRST_DIR="$(dirname -- "$FIRST")"
 BUILD_DIR="${FIRST_DIR}/build"
 mkdir -p "$BUILD_DIR"
 
-# ELF name = basename of the first file without extension
+# Base name for combined .o and ELF
 first_base="$(basename -- "$FIRST")"
-elf_name="${first_base%.*}"
-if [[ -z "$elf_name" ]]; then
-  elf_name="$first_base"
+base_name="${first_base%.*}"
+if [[ -z "$base_name" ]]; then
+  base_name="$first_base"
 fi
-ELF_PATH="${BUILD_DIR}/${elf_name}"
+
+COMBINED_O="${BUILD_DIR}/${base_name}.o"
+ELF_PATH="${BUILD_DIR}/${base_name}"
 
 CC="mipsel-linux-gnu-gcc"
 if ! command -v "$CC" >/dev/null 2>&1; then
@@ -51,23 +57,12 @@ if ! command -v "$CC" >/dev/null 2>&1; then
   exit 127
 fi
 
-# Compile each source to .o
-OBJ_FILES=()
-for src in "${INPUTS[@]}"; do
-  base="$(basename -- "$src")"
-  name="${base%.*}"
-  if [[ -z "$name" ]]; then
-    name="$base"
-  fi
-  obj="${BUILD_DIR}/${name}.o"
-  OBJ_FILES+=("$obj")
+# 1) Directly compile+relocatable-link all sources into one .o (with -g)
+echo "[INFO] Relocatable link (sources -> combined .o): ${INPUTS[*]} -> $COMBINED_O"
+"$CC" -g -r -o "$COMBINED_O" "${INPUTS[@]}"
 
-  echo "[INFO] Compile: $src -> $obj"
-  "$CC" -c "$src" -o "$obj"
-done
-
-# Link all .o into the final ELF
-echo "[INFO] Link: ${OBJ_FILES[*]} -> $ELF_PATH"
-"$CC" -o "$ELF_PATH" "${OBJ_FILES[@]}" "${EXTRA_FLAGS[@]}"
+# 2) Link combined .o into final ELF (with -g)
+echo "[INFO] Final link: $COMBINED_O -> $ELF_PATH"
+"$CC" -g -o "$ELF_PATH" "$COMBINED_O" "${EXTRA_FLAGS[@]}"
 
 echo "[OK] Built: $ELF_PATH"
