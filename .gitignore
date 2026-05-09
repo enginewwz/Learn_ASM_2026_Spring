@@ -15,5 +15,9 @@
 **/asm86.sh
 !/asm86.sh
 
+# & ignore asmmips.sh, other than in the root directory
+**/asmmips.sh
+!/asmmips.sh
+
 # ignore zip
 *.zip
