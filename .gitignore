@@ -19,5 +19,9 @@
 **/asmmips.sh
 !/asmmips.sh
 
+# & ignore runmips.sh, other than in the root directory
+**/runmips.sh
+!/runmips.sh
+
 # ignore zip
 *.zip
