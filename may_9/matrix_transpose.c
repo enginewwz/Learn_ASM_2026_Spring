@@ -7,6 +7,7 @@ void matrix_transpose_avx2_blocking(float *A, float *B);
 void matrix_transpose_sse(float *A, float *B);
 void matrix_transpose_naive(float *A, float *B);
 void matrix_transpose_blocking(float *A, float *B);
+void matrix_transpose_icx(float *A, float *B);
 
 double get_time_diff(struct timespec start, struct timespec end) {
     return (end.tv_sec - start.tv_sec) * 1000.0 + (end.tv_nsec - start.tv_nsec) / 1000000.0;
@@ -21,6 +22,7 @@ int main() {
     static float D[4096][4096] __attribute__((aligned(32)));
     static float E[4096][4096] __attribute__((aligned(32)));
     static float F[4096][4096] __attribute__((aligned(32)));
+    static float G[4096][4096] __attribute__((aligned(32)));
 
     struct timespec start, end;
 
@@ -29,6 +31,7 @@ int main() {
     double sse_minimum_time = 1000.0; // Initialize to a large value
     double naive_minimum_time = 1000.0; // Initialize to a large value
     double blocking_minimum_time = 1000.0; // Initialize to a large value
+    double icx_minimum_time = 1000.0; // Initialize to a large value
     // Initialize A with some values
     for (int i = 0; i < 4096; i++) {
         for (int j = 0; j < 4096; j++) {
@@ -45,6 +48,7 @@ int main() {
                 D[i][j] = (float)0.0; // Clear D before each run
                 E[i][j] = (float)0.0; // Clear E before each run
                 F[i][j] = (float)0.0; // Clear F before each run
+                G[i][j] = (float)0.0; // Clear G before each run
             }
         }
 
@@ -92,12 +96,22 @@ int main() {
 
         if (get_time_diff(start, end) < avx2_blocking_minimum_time) 
             avx2_blocking_minimum_time = get_time_diff(start, end);
+
+        clock_gettime(CLOCK_MONOTONIC, &start);
+        // Call the icx transpose function
+        matrix_transpose_icx(&A[0][0], &G[0][0]);
+
+        clock_gettime(CLOCK_MONOTONIC, &end);
+
+        if (get_time_diff(start, end) < icx_minimum_time) 
+            icx_minimum_time = get_time_diff(start, end);
     }
 
     double avx2_accelerate_rate = naive_minimum_time / avx2_minimum_time;
     double avx2_blocking_accelerate_rate = naive_minimum_time / avx2_blocking_minimum_time;
     double sse_accelerate_rate = naive_minimum_time / sse_minimum_time;
     double blocking_accelerate_rate = naive_minimum_time / blocking_minimum_time;
+    double icx_accelerate_rate = naive_minimum_time / icx_minimum_time;
     double naive_accelerate_rate = 1.0; // Naive is the baseline
 
     printf("Matrix Transpose Performance (Minimum Time over 3 runs):\n");
@@ -108,6 +122,7 @@ int main() {
     printf("SSE Transpose\t\t|%.3f ms\t|%.2fx\n", sse_minimum_time, sse_accelerate_rate);
     printf("AVX2 Transpose\t\t|%.3f ms\t|%.2fx\n", avx2_minimum_time, avx2_accelerate_rate);
     printf("AVX2 Blocking Transpose\t|%.3f ms\t|%.2fx\n", avx2_blocking_minimum_time, avx2_blocking_accelerate_rate);
+    printf("ICX Transpose\t\t|%.3f ms\t|%.2fx\n", icx_minimum_time, icx_accelerate_rate);
     printf("--------------------------------------------------------\n\n\n");
     printf("Naive Transposed Matrix verification\n");
     // print a 5x5 block of the transposed matrix E to verify correctness
@@ -150,6 +165,15 @@ int main() {
     for (int i = 4000; i < 4005; i++) {
         for (int j = 1200; j < 1205; j++) {
             printf("%.1f ", C[i][j]);
+        }
+        printf("\n");
+    }
+
+    printf("ICX Transposed Matrix verification\n");
+    // print a 5x5 block of the transposed matrix G to verify correctness
+    for (int i = 4000; i < 4005; i++) {
+        for (int j = 1200; j < 1205; j++) {
+            printf("%.1f ", G[i][j]);
         }
         printf("\n");
     }
