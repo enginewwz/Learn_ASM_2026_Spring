@@ -7,47 +7,55 @@ matrix_mul_c:
 .LFB0:
 	.cfi_startproc
 	endbr64
-	pushq	%rbx
+	pushq	%rbp
 	.cfi_def_cfa_offset 16
-	.cfi_offset 3, -16
-	movq	%rdi, %r11
-	movq	%rdx, %r9
-	xorl	%r10d, %r10d
-	leaq	67108864(%rsi), %rbx
+	.cfi_offset 6, -16
+	movq	%rdi, %r9
+	movq	%rsi, %rdi
+	xorl	%r8d, %r8d
+	movq	%rdx, %rsi
+	movq	%rsp, %rbp
+	.cfi_def_cfa_register 6
+	pushq	%r12
+	pushq	%rbx
+	.cfi_offset 12, -24
+	.cfi_offset 3, -32
+	leaq	67108864(%rdi), %rbx
 .L2:
-	movq	%rbx, %rsi
-	leaq	(%r11,%r10,4), %r8
-	movq	%r9, %rcx
-	xorl	%edi, %edi
-	.p2align 4,,10
-	.p2align 3
+	movq	%r8, %r10
+	movq	%rdi, %r11
+	leaq	16384(%rsi), %r12
+	movq	%rbx, %rcx
+	salq	$14, %r10
+	addq	%r9, %r10
 .L4:
-	movl	$0x00000000, (%rcx)
-	leaq	-67108864(%rsi), %rax
-	movq	%r8, %rdx
-	pxor	%xmm1, %xmm1
+	movq	%r10, %rdx
+	movq	%r11, %rax
+	vxorps	%xmm1, %xmm1, %xmm1
 	.p2align 4,,10
 	.p2align 3
 .L3:
-	movss	(%rdx), %xmm0
-	mulss	(%rax), %xmm0
+	vbroadcastss	(%rdx), %ymm0
+	vmulps	(%rax), %ymm0, %ymm0
 	addq	$16384, %rax
 	addq	$4, %rdx
-	addss	%xmm0, %xmm1
-	movss	%xmm1, (%rcx)
-	cmpq	%rsi, %rax
+	cmpq	%rcx, %rax
+	vaddps	%ymm0, %ymm1, %ymm1
 	jne	.L3
-	addl	$1, %edi
-	addq	$4, %rcx
-	leaq	4(%rax), %rsi
-	cmpl	$4096, %edi
+	vmovups	%ymm1, (%rsi)
+	addq	$32, %rsi
+	addq	$32, %r11
+	leaq	32(%rax), %rcx
+	cmpq	%r12, %rsi
 	jne	.L4
-	addq	$4096, %r10
-	addq	$16384, %r9
-	cmpq	$16777216, %r10
+	addq	$1, %r8
+	cmpq	$4096, %r8
 	jne	.L2
+	vzeroupper
 	popq	%rbx
-	.cfi_def_cfa_offset 8
+	popq	%r12
+	popq	%rbp
+	.cfi_def_cfa 7, 8
 	ret
 	.cfi_endproc
 .LFE0:
