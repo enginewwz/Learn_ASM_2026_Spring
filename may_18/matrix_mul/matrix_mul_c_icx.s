@@ -1,9 +1,9 @@
 	.file	"matrix_mul_c.c"
 	.text
-	.globl	matrix_mul_c                    # -- Begin function matrix_mul_c
+	.globl	matrix_mul_c_icx                # -- Begin function matrix_mul_c_icx
 	.p2align	4
-	.type	matrix_mul_c,@function
-matrix_mul_c:                           # 
+	.type	matrix_mul_c_icx,@function
+matrix_mul_c_icx:                       # 
 	.cfi_startproc
 # %bb.0:
 	pushq	%rbp
@@ -205,7 +205,7 @@ matrix_mul_c:                           #
 	vzeroupper
 	retq
 .Lfunc_end0:
-	.size	matrix_mul_c, .Lfunc_end0-matrix_mul_c
+	.size	matrix_mul_c_icx, .Lfunc_end0-matrix_mul_c_icx
 	.cfi_endproc
                                         # -- End function
 	.ident	"Intel(R) oneAPI DPC++/C++ Compiler 2026.0.0 (2026.0.0.20260331)"

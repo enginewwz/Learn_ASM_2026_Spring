@@ -8,7 +8,7 @@
 
 void matrix_transpose_avx2(float *B, float *B_transposed);
 
-void matrix_mul_c(float * __restrict__ A, float * __restrict__ B, float * __restrict__ C) {
+void matrix_mul_c_with_transpose(float * __restrict__ A, float * __restrict__ B, float * __restrict__ C) {
     // Transpose B
     float *B_transposed = (float *)_mm_malloc(4096 * 4096 * sizeof(float), 32);
     matrix_transpose_avx2(B, B_transposed);
