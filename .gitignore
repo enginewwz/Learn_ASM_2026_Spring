@@ -23,5 +23,9 @@
 **/runmips.sh
 !/runmips.sh
 
+# & ignore asm_icx.sh, other than in the root directory
+**/asm_icx.sh
+!/asm_icx.sh
+
 # ignore zip
 *.zip
