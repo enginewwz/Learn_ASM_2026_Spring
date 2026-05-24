@@ -29,3 +29,6 @@
 
 # ignore zip
 *.zip
+
+# ignore report_guide.md
+report_guide.md
