@@ -22,7 +22,22 @@ mkdir -p "$BUILD_DIR"
 
 ELF="${BUILD_DIR}/${OUT_NAME}"
 
+# Add Python embed flags if any source includes Python.h.
+PY_EMBED_FLAGS=""
+for SRC in "$@"; do
+  if grep -q "Python.h" "$SRC" 2>/dev/null; then
+    if command -v python3.12-config >/dev/null 2>&1; then
+      PY_EMBED_FLAGS="$(python3.12-config --embed --cflags --ldflags)"
+    elif command -v python3-config >/dev/null 2>&1; then
+      PY_EMBED_FLAGS="$(python3-config --embed --cflags --ldflags)"
+    else
+      echo "Python config tool not found; linking may fail." >&2
+    fi
+    break
+  fi
+done
+
 # Compile & link with required flags
-icx -O3 -xHost -fp-model=fast -qopt-zmm-usage=high -qopenmp -o "$ELF" "$@"
+icx -O3 -xHost -fp-model=fast -qopt-zmm-usage=high -qopenmp -o "$ELF" "$@" $PY_EMBED_FLAGS
 
 echo "Built: $ELF"
