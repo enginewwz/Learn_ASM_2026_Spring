@@ -6,7 +6,7 @@ The library function memset has the following prototype:
 void *memset(void *s, int c, size_t n);
 ``` 
 
-This function fills n bytes of the memory area starting at s with copies of the loworder byte of c. For example, it can be used to zero out a region of memory by giving argument 0 for c, but other values are possible.
+This function fills n bytes of the memory area starting at s with copies of the loworder byte of c. For example, it can be used to zero out a region of memory by giving argument 0 for c, but other values are possible.  
 The following is a straightforward implementation of memset:
 
 ```c
@@ -23,7 +23,7 @@ void *basic_memset(void *s, int c, size_t n)
 }
 ```
 
-Implement a more efficient version of the function by using a word of data type unsigned long to pack eight copies of c, and then step through the region using word-level writes. You might find it helpful to do additional loop unrolling as well. On our reference machine, we were able to reduce the CPE from 1.00 for the straightforward implementation to 0.127. That is, the program is able to write 8 bytes every clock cycle.
+Implement a more efficient version of the function by using a word of data type unsigned long to pack eight copies of c, and then step through the region using word-level writes. You might find it helpful to do additional loop unrolling as well. On our reference machine, we were able to reduce the CPE from 1.00 for the straightforward implementation to 0.127. That is, the program is able to write 8 bytes every clock cycle.  
 Here are some additional guidelines. To ensure portability, let K denote the value of sizeof(unsigned long) for the machine on which you run your program.
 1. You may not call any library functions.
 2. Your code should work for arbitrary values of n, including when it is not a multiple of K. You can do this in a manner similar to the way we finish the last few iterations with loop unrolling.
